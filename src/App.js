@@ -22,6 +22,7 @@ class App extends Component {
       searchKey: '',
     };
 
+    this.needsToSearchTopStories = this.needsToSearchTopStories.bind(this);
     this.setSearchTopStories = this.setSearchTopStories.bind(this);
     this.onDismiss = this.onDismiss.bind(this);
     this.onSearchChange = this.onSearchChange.bind(this);
@@ -32,24 +33,35 @@ class App extends Component {
   componentWillMount() {
     const { searchTerm } = this.state;
     this.setState({ searchKey: searchTerm });
-    this.setSearchTopStories(this.searchTerm);
+    this.fetchSearchTopStories(this.searchTerm);
+  }
+
+  needsToSearchTopStories(searchTerm) {
+    return !this.state.results[searchTerm];
   }
 
   onSearchSubmit(event) {
     const { searchTerm } = this.state;
     this.setState({ searchKey: searchTerm });
-    this.fetchSearchTopStories(searchTerm);
+
+    if (this.needsToSearchTopStories(searchTerm)) {
+      this.fetchSearchTopStories(searchTerm);
+    }
 
     event.preventDefault();
   }
 
   onDismiss(id) {
+    const { searchKey, results } = this.state;
+    const { hits, page } = results[searchKey];
+
     const isNotId = item => item.objectID !== id;
-    const updatedList = this.state.result.hits.filter(isNotId);
+    const updatedHits = hits.filter(isNotId);
+
     this.setState({
-      result: {
-        ...this.state.result,
-        hits: updatedList,
+      results: {
+        ...results,
+        [searchKey]: { hits: updatedHits, page },
       }
     });
   }
@@ -92,9 +104,19 @@ class App extends Component {
   }
 
   render() {
-    const { searchTerm, result } = this.state;
-    if (!result) { return null }
-    const page = (result && result.page) || 0;
+    const { searchTerm, results, searchKey } = this.state;
+    if (!results) { return null }
+    const page = (
+      results &&
+      results[searchKey] &&
+      results[searchKey].page
+    ) || 0;
+
+    const list = (
+      results &&
+      results[searchKey] &&
+      results[searchKey].hits
+    ) || [];
 
     return (
       <div className="page">
@@ -107,15 +129,15 @@ class App extends Component {
           >Search</Search>
         </div>
         {
-          result &&
+          results &&
             <Table
-              list={result.hits}
+              list={list}
               onDismiss={this.onDismiss}
             />
         }
 
         <div className="interactions">
-          <button onClick={() => this.fetchSearchTopStories(searchTerm, page + 1)}>
+          <button onClick={() => this.fetchSearchTopStories(searchKey, page + 1)}>
             More
           </button>
         </div>
