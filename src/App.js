@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import fetch from 'isomorphic-fetch';
 import './App.css';
 
 const largeColumn = { width: '40%' };
@@ -18,8 +19,9 @@ class App extends Component {
     super(props);
     this.state = {
       searchTerm: DEFAULT_QUERY,
-      results: null,
+      results: [],
       searchKey: '',
+      error: null,
     };
 
     this.needsToSearchTopStories = this.needsToSearchTopStories.bind(this);
@@ -74,8 +76,8 @@ class App extends Component {
     const { hits, page } = result;
     const { searchKey, results } = this.state;
 
-    const oldHits = results && results[searchKey]
-      ? result[searchKey].hits
+    const oldHits = (results && results[searchKey])
+      ? results[searchKey].hits
       : [];
 
     const updateHits = [
@@ -95,7 +97,7 @@ class App extends Component {
     fetch(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}&${PARAM_PAGE}${page}&${HITS_PER_PAGE}${DEFAULT_HITS_PER_PAGE}`)
       .then(response => response.json())
       .then(result => this.setSearchTopStories(result))
-      .catch(e => e);
+      .catch(e => this.setState({ error: e }));
   }
 
   componentDidMount() {
@@ -104,8 +106,7 @@ class App extends Component {
   }
 
   render() {
-    const { searchTerm, results, searchKey } = this.state;
-    if (!results) { return null }
+    const { searchTerm, results, searchKey, error } = this.state;
     const page = (
       results &&
       results[searchKey] &&
@@ -128,13 +129,16 @@ class App extends Component {
             value={searchTerm}
           >Search</Search>
         </div>
-        {
-          results &&
-            <Table
-              list={list}
-              onDismiss={this.onDismiss}
-            />
-        }
+
+        { error
+          ? <div className="interactions">
+            <p>Something went wrong.</p>
+          </div>
+          : <Table
+            list={list}
+            onDismiss={this.onDismiss}
+          /> }
+
 
         <div className="interactions">
           <button onClick={() => this.fetchSearchTopStories(searchKey, page + 1)}>
@@ -193,6 +197,8 @@ const Button = ({onClick, className = '', children}) => (
   </button>
 );
 
-
-
 export default App;
+export {
+  Button,
+  Search,
+Table, };
