@@ -23,6 +23,7 @@ class App extends Component {
       results: [],
       searchKey: '',
       error: null,
+      isLoading: false,
     };
 
     this.needsToSearchTopStories = this.needsToSearchTopStories.bind(this);
@@ -91,10 +92,12 @@ class App extends Component {
         ...results,
         [searchKey]: { hits: updateHits, page },
       },
+      isLoading: false,
     });
   }
 
   fetchSearchTopStories(searchTerm, page = 0) {
+    this.setState({ isLoading: true })
     fetch(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}&${PARAM_PAGE}${page}&${HITS_PER_PAGE}${DEFAULT_HITS_PER_PAGE}`)
       .then(response => response.json())
       .then(result => this.setSearchTopStories(result))
@@ -107,7 +110,7 @@ class App extends Component {
   }
 
   render() {
-    const { searchTerm, results, searchKey, error } = this.state;
+    const { searchTerm, results, searchKey, error, isLoading } = this.state;
     const page = (
       results &&
       results[searchKey] &&
@@ -142,32 +145,45 @@ class App extends Component {
 
 
         <div className="interactions">
-          <button onClick={() => this.fetchSearchTopStories(searchKey, page + 1)}>
-            More
-          </button>
+        { isLoading
+          ? <Loading />
+          : <button onClick={() => this.fetchSearchTopStories(searchKey, page + 1)}>
+              More
+            </button>
+        }
         </div>
       </div>
     );
   }
 }
 
-const Search = ({ value, onChange, onSubmit, children }) => (
-  <form onSubmit={onSubmit}>
-    <input
-      type="text"
-      value={value}
-      onChange={onChange}
-    />
-    <button type="submit">
-      {children}
-    </button>
-  </form>
-);
+class Search extends Component {
+  componentDidMount() {
+    this.input.focus();
+  }
+
+  render() {
+    const { value, onChange, onSubmit, children } = this.props;
+    return (
+      <form onSubmit={onSubmit}>
+        <input
+          type="text"
+          value={value}
+          onChange={onChange}
+          ref={(node) => this.input = node}
+        />
+        <button type="submit">
+          {children}
+        </button>
+      </form>
+    );
+  }
+}
 
 Search.propTypes = {
   value: PropTypes.string.isRequired,
   onChange: PropTypes.func.isRequired,
-  OnSubmit: PropTypes.func.isRequired,
+  onSubmit: PropTypes.func.isRequired,
   children: PropTypes.node.isRequired,
 };
 
@@ -226,6 +242,9 @@ Button.propTypes = {
 Button.defaultProps = {
   className: '',
 }
+
+const Loading = () =>
+  <div>Loading...</div>
 
 export default App;
 export {
