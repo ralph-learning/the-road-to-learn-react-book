@@ -25,7 +25,7 @@ describe('App', () => {
 
 describe('Search', () => {
   const props = {
-    OnSubmit: () => {},
+    onSubmit: () => {},
     onChange: () => {},
     value: '',
   }
@@ -69,6 +69,8 @@ describe('Table', () => {
       { title: '2', author: '2', num_comments: 1, points: 2, objectID: 'z' },
     ],
     onDismiss: () => {},
+    sortKey: 'TITLE',
+    isSortReverse: false,
   };
 
   it('renders without crashing', () => {
